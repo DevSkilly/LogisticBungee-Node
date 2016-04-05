@@ -1,0 +1,14 @@
+{
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 3000,
+    "password": "",
+    "prefix": "LG"
+  },
+  "gamemodes": {
+    "hungergames": {
+      "path": "/hungergames",
+      "shortname": "HG"
+    }
+  }
+}
