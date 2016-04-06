@@ -6,10 +6,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import sun.misc.IOUtils;
 
@@ -28,9 +30,12 @@ public class Node {
 	protected JSONObject config;
 
 	protected JedisPool jedis;
+	
+	protected UUID id;
 
 	
 	private Node() {
+		id = UUID.randomUUID();
 		try {
 			setupConfig();
 		} catch (JSONException | IOException e) {
@@ -38,15 +43,35 @@ public class Node {
 			System.err.println("Could not setup config, exiting...");
 			return;
 		}
+		
+		//in case it collide
+		if(config.getString("uuid") != null && !config.getString("uuid").isEmpty()){
+			try{
+				id = UUID.fromString(config.getString("uuid"));
+			}catch(IllegalArgumentException ignored){}
+		}
 		jedis = new JedisPool(config.getJSONObject("redis").getString("host"), config.getJSONObject("redis").getInt("port"));
-}
+		
+		register();
+	}
+
+	private void register() {
+		try(Jedis j = getJedis()){
+			j.publish(config.getJSONObject("redis").getString("prefix") + ":bungee", id.toString() + "NREGISTER");
+		}
+	}
 
 	public JSONObject getConfig() {
 		return config;
 	}
 
-	public JedisPool getJedis() {
-		return jedis;
+	public Jedis getJedis() {
+		Jedis j = jedis.getResource();
+	
+		if(config.getJSONObject("redis").getString("pass") != null && !config.getJSONObject("redis").getString("pass").isEmpty()){
+			j.auth(config.getJSONObject("redis").getString("pass"));
+		}
+		return j;
 	}
 
 	private void setupConfig() throws JSONException, FileNotFoundException, IOException {
@@ -65,6 +90,6 @@ public class Node {
 	}
 
 	public static void main(String[] args) {
-		
+		Node.getInstance();
 	}
 }
