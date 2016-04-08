@@ -1,14 +1,20 @@
 {
+  "node": {
+     "uuid": "",
+     "maxLoad": 5,
+     "keepAliveTime": 10,
+  },
   "redis": {
     "host": "127.0.0.1",
-    "port": 3000,
+    "port": 6379,
     "password": "",
     "prefix": "LG"
   },
   "gamemodes": {
     "hungergames": {
       "path": "/hungergames",
-      "shortname": "HG"
+      "shortname": "HG",
+      "ram": 2.0
     }
   }
 }

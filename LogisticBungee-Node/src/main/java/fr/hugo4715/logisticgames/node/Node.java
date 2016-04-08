@@ -11,6 +11,8 @@ import java.util.UUID;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import fr.hugo4715.logisticgames.node.listener.ChannelHandler;
+import fr.hugo4715.logisticgames.node.util.Checker;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import sun.misc.IOUtils;
@@ -45,20 +47,35 @@ public class Node {
 		}
 		
 		//in case it collide
-		if(config.getString("uuid") != null && !config.getString("uuid").isEmpty()){
+		if(config.getJSONObject("node").getString("uuid") != null && !config.getJSONObject("node").getString("uuid").isEmpty()){
 			try{
-				id = UUID.fromString(config.getString("uuid"));
+				id = UUID.fromString(config.getJSONObject("node").getString("uuid"));
 			}catch(IllegalArgumentException ignored){}
 		}
 		jedis = new JedisPool(config.getJSONObject("redis").getString("host"), config.getJSONObject("redis").getInt("port"));
 		
 		register();
+		new Checker(config.getJSONObject("node").getInt("keepAliveTime")*900).start();
+		
+		new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				getJedis().subscribe(new ChannelHandler(), getConfig().getJSONObject("redis").getString("prefix") + ":node:" + id.toString());
+			}
+			
+		}).start();
 	}
 
 	private void register() {
 		try(Jedis j = getJedis()){
 			j.publish(config.getJSONObject("redis").getString("prefix") + ":bungee", id.toString() + "NREGISTER");
+			j.publish(config.getJSONObject("redis").getString("prefix") + ":bungee", id.toString() + "NLOAD0&&" + getConfig().getJSONObject("node").getInt("maxLoad"));
 		}
+	}
+
+	public UUID getId() {
+		return id;
 	}
 
 	public JSONObject getConfig() {
@@ -68,8 +85,8 @@ public class Node {
 	public Jedis getJedis() {
 		Jedis j = jedis.getResource();
 	
-		if(config.getJSONObject("redis").getString("pass") != null && !config.getJSONObject("redis").getString("pass").isEmpty()){
-			j.auth(config.getJSONObject("redis").getString("pass"));
+		if(config.getJSONObject("redis").getString("password") != null && !config.getJSONObject("redis").getString("password").isEmpty()){
+			j.auth(config.getJSONObject("redis").getString("password"));
 		}
 		return j;
 	}
@@ -81,7 +98,8 @@ public class Node {
 			System.out.println("Finished reading config");
 		}else{
 			System.out.println("Creating configuration...");
-			try (InputStream in = this.getClass().getResourceAsStream("config.yml"); FileOutputStream out = new FileOutputStream(configFile)) {
+			try (InputStream in = this.getClass().getResourceAsStream("/config.json"); FileOutputStream out = new FileOutputStream(configFile)) {
+				System.out.println(in);
 				out.write(IOUtils.readFully(in, -1, false));
 			}
 			config = new JSONObject(new String(IOUtils.readFully(new FileInputStream(configFile), Integer.MAX_VALUE, false)));

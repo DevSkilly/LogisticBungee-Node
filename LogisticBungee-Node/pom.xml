@@ -1,10 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>fr.hugo4715.logisticgames.node</groupId>
-  <artifactId>LogisticGames-Node</artifactId>
-  <version>0.0.1-alpha</version>
-  <name>LogisticGames-Node</name>
-  
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>fr.hugo4715.logisticgames.node</groupId>
+	<artifactId>LogisticGames-Node</artifactId>
+	<version>0.0.1-alpha</version>
+	<name>LogisticGames-Node</name>
+
 	<dependencies>
 		<dependency>
 			<groupId>redis.clients</groupId>
@@ -36,6 +37,16 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>1.5</version>
 				<configuration>
+
+					<!-- fix for the Infinite loop bug -->
+					<createDependencyReducedPom>false</createDependencyReducedPom>
+
+					<transformers>
+						<transformer
+							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+							<mainClass>fr.hugo4715.logisticgames.node.Node</mainClass>
+						</transformer>
+					</transformers>
 					<artifactSet>
 						<includes>
 							<include>redis.clients</include>
@@ -52,7 +63,20 @@
 							<shadedPattern>shaded.org.apache.commons</shadedPattern>
 						</relocation>
 					</relocations>
-
+					<filters>
+						<filter>
+							<artifact>*:*</artifact>
+							<excludes>
+								<exclude>META-INF/license/**</exclude>
+								<exclude>META-INF/*</exclude>
+								<exclude>META-INF/maven/**</exclude>
+								<exclude>LICENSE</exclude>
+								<exclude>NOTICE</exclude>
+								<exclude>/*.txt</exclude>
+								<exclude>build.properties</exclude>
+							</excludes>
+						</filter>
+					</filters>
 				</configuration>
 				<executions>
 					<execution>
@@ -65,5 +89,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>
