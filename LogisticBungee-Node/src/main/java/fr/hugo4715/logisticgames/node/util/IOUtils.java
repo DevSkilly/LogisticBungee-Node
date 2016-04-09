@@ -9,6 +9,12 @@ import java.io.OutputStream;
 
 public class IOUtils {
 	public static void copy(File sourceLocation, File targetLocation) throws IOException {
+		System.out.println("Copying " + sourceLocation.getAbsolutePath() + " to " + targetLocation.getAbsolutePath());
+		a(sourceLocation, targetLocation);
+		
+	}
+	
+	private static void a(File sourceLocation, File targetLocation) throws IOException{
 		if (sourceLocation.isDirectory()) {
 			copyDirectory(sourceLocation, targetLocation);
 		} else {
@@ -22,7 +28,7 @@ public class IOUtils {
 		}
 
 		for (String f : source.list()) {
-			copy(new File(source, f), new File(target, f));
+			a(new File(source, f), new File(target, f));
 		}
 	}
 

@@ -3,6 +3,7 @@
      "uuid": "",
      "maxLoad": 5,
      "keepAliveTime": 10,
+     "logServer": false,
   },
   "redis": {
     "host": "127.0.0.1",

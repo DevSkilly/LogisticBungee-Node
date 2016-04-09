@@ -15,11 +15,12 @@ import fr.hugo4715.logisticgames.node.Node;
 import fr.hugo4715.logisticgames.node.util.Callback;
 import fr.hugo4715.logisticgames.node.util.IOUtils;
 import fr.hugo4715.logisticgames.node.util.SimpleFileNameFilter;
+import fr.hugo4715.logisticgames.node.util.SocketUtils;
 
 public class ServerManager {
 	private static ServerManager instance;
-	
-	
+
+
 	public static ServerManager getInstance() {
 		if (null == instance) {
 			instance = new ServerManager();
@@ -30,18 +31,11 @@ public class ServerManager {
 	private File serverDir;
 	private File dataDir;
 	private ExecutorService pool;
-	
-	public List<Integer> getUsedPorts() {
-		return usedPorts;
-	}
-
-
 
 	public List<Server> getServers() {
 		return servers;
 	}
 
-	private List<Integer> usedPorts;
 	private List<Server> servers;
 
 	private ServerManager() {
@@ -51,11 +45,8 @@ public class ServerManager {
 		serverDir.mkdir();
 		dataDir.mkdir();
 
-		pool = Executors.newFixedThreadPool(1);
-		usedPorts = new ArrayList<Integer>();
+		pool = Executors.newFixedThreadPool(1); //number of server startup at once
 	}
-
-
 
 	public void startServer(final String type, final Callback<ServerStartedCallBack> callback){
 		final JSONObject gm;
@@ -69,7 +60,7 @@ public class ServerManager {
 			callback.done(null, new RuntimeException("404: server type not found"));
 			return;
 		}
-		
+
 		System.out.println("Creating new server of type " + type);
 		pool.submit(new Runnable(){
 			@Override
@@ -160,13 +151,13 @@ public class ServerManager {
 
 	}
 
-
 	private Integer getPort(){
-		int choosed = 2008;
 		Random r = new Random();
-		while(usedPorts.contains(choosed)){
+		int choosed = r.nextInt(65500);
+		while(!SocketUtils.isAvailable(choosed) || choosed < 1024){ //port is not available or is below 1024
 			choosed = r.nextInt(65500);
 		}
+		System.out.println("Choosed port " + choosed);
 		return choosed;
 	}
 }
