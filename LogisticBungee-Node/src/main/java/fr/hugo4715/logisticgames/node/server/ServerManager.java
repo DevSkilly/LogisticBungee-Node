@@ -46,6 +46,8 @@ public class ServerManager {
 		dataDir.mkdir();
 
 		pool = Executors.newFixedThreadPool(1); //number of server startup at once
+		
+		
 	}
 
 	public void startServer(final String type, final Callback<ServerStartedCallBack> callback){
@@ -73,10 +75,9 @@ public class ServerManager {
 				File data = new File(dataDir.getAbsolutePath() + File.separator + srv);
 
 				data.mkdir();
-				data.deleteOnExit();
 
 				try {
-					System.out.println("Copiyng");
+					System.out.println("Copying");
 					IOUtils.copy(path, data);
 					System.out.println("Finished copy");
 				} catch (IOException e) {
@@ -87,9 +88,9 @@ public class ServerManager {
 				for(String f : data.list(new SimpleFileNameFilter("jar"))){
 					System.out.println("jar file is " + f);
 					try {
-						System.out.println("Creating new server process...");
+						String args = "java&&-jar&&" + f + "&&--port&&" + String.valueOf(port) ;
 
-						String args = "java&&-jar&&"  + f + "&&--port&&" + String.valueOf(port);
+						System.out.println("Creating new server process with cmd " + args.replace("&&", " "));
 
 						ProcessBuilder pb = new ProcessBuilder().command(args.split("&&"));
 						pb.directory(data);
@@ -99,6 +100,7 @@ public class ServerManager {
 						servers.add(new Server(process, srv, type));
 						System.out.println("Server successfully created!");
 						callback.done(new ServerStartedCallBack(srv,port, data), null);
+						return;
 					} catch (Exception e) {
 						callback.done(null, e);
 						return;
@@ -124,7 +126,6 @@ public class ServerManager {
 		private String name;
 		private File data;
 		public ServerStartedCallBack(String name, int port, File data) {
-			super();
 			this.port = port;
 			this.data = data;
 			this.name = name;

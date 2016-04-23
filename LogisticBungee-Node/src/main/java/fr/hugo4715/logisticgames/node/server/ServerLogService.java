@@ -15,17 +15,16 @@ public class ServerLogService implements Runnable{
 		this.stream = new BufferedReader(new InputStreamReader(stream));
 	}
 
-
-
 	@Override
 	public void run() {
+		System.out.println("Started server log service");
 		try {
 			String s = "";
 			while((s = stream.readLine()) != null){
-				//do something?
 				if(Node.getInstance().getConfig().getJSONObject("node").getBoolean("logServer"))System.out.println(s);
 			}
-		} catch (IOException ignored) {}//will just stop the log service, not an issue since it is only for testing
+		} catch (IOException e) {
+			e.printStackTrace();
+		}//will just stop the log service, not an issue since it is only for testing
 	}
-
 }

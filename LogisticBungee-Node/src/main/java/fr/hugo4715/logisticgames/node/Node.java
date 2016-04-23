@@ -12,6 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import fr.hugo4715.logisticgames.node.listener.ChannelHandler;
+import fr.hugo4715.logisticgames.node.server.ServerManager;
 import fr.hugo4715.logisticgames.node.util.Checker;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -34,7 +35,8 @@ public class Node {
 	protected JedisPool jedis;
 	
 	protected UUID id;
-
+	
+	protected int load = 0;
 	
 	private Node() {
 		id = UUID.randomUUID();
@@ -65,6 +67,13 @@ public class Node {
 			}
 			
 		}).start();
+		
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
+			@Override
+			public void run() {
+				ServerManager.getInstance().stopAll();
+			}
+		}));
 	}
 
 	private void register() {
@@ -89,6 +98,10 @@ public class Node {
 			j.auth(config.getJSONObject("redis").getString("password"));
 		}
 		return j;
+	}
+	
+	public int getLoad() {
+		return load;
 	}
 
 	private void setupConfig() throws JSONException, FileNotFoundException, IOException {

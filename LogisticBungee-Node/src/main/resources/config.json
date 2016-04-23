@@ -1,7 +1,7 @@
 {
   "node": {
      "uuid": "",
-     "maxLoad": 5,
+     "maxLoad": 4092, 
      "keepAliveTime": 10,
      "logServer": false,
   },
@@ -13,9 +13,8 @@
   },
   "gamemodes": {
     "hungergames": {
-      "path": "/hungergames",
-      "shortname": "HG",
-      "ram": 2.0
+      "path": "/HungerGames",
+      "ram": 1024
     }
   }
 }

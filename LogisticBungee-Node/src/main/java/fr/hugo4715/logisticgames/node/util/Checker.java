@@ -15,7 +15,7 @@ public class Checker extends Thread implements Runnable {
 		while(true){
 			
 			try(Jedis j = Node.getInstance().getJedis()){
-				j.publish(Node.getInstance().getConfig().getJSONObject("redis").getString("prefix") + ":bungee", Node.getInstance().getId().toString() + "PING");
+				j.publish(Node.getInstance().getConfig().getJSONObject("redis").getString("prefix") + ":bungee", Node.getInstance().getId().toString() + "STATUS" + Node.getInstance().getLoad() + "&&" + Node.getInstance().getConfig().getJSONObject("node").getInt("maxLoad"));
 			}
 			try {
 				sleep(wait);
