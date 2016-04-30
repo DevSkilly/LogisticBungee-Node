@@ -2,7 +2,10 @@ package fr.hugo4715.logisticgames.node.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -39,14 +42,35 @@ public class ServerManager {
 	private List<Server> servers;
 
 	private ServerManager() {
-		servers = new ArrayList<Server>();
+		servers = Collections.synchronizedList(new ArrayList<Server>());;
 		serverDir = new File("servers" + File.separator);
 		dataDir = new File("data" + File.separator);
+		IOUtils.deleteDir(dataDir);
 		serverDir.mkdir();
 		dataDir.mkdir();
 
 		pool = Executors.newFixedThreadPool(1); //number of server startup at once
 		
+		new Thread(new Runnable(){
+			@Override
+			public void run() {
+				while(true){
+					Iterator<Server> i = servers.iterator();
+					while(i.hasNext()){
+						Server srv = i.next();
+						
+						if(!srv.isAlive()){
+							srv.kill();
+							i.remove();
+						}
+					}
+					
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException ignored) {}
+				}
+			}
+		}).start();
 		
 	}
 
@@ -151,11 +175,23 @@ public class ServerManager {
 
 
 	}
+	
+	public int getPort(){
+		try {
+			ServerSocket s = new ServerSocket(0);
+			s.close();
+			return s.getLocalPort();
+		} catch (IOException e) {
+			System.out.println("No free port found...");
+			return -1;
+		}
+	}
 
-	private Integer getPort(){
+	@Deprecated
+	private Integer _getPort(){
 		Random r = new Random();
 		int choosed = r.nextInt(65500);
-		while(!SocketUtils.isAvailable(choosed) || choosed < 1024){ //port is not available or is below 1024
+		while(choosed < 1024 || !SocketUtils.isAvailable(choosed)){ //port is not available or is below 1024
 			choosed = r.nextInt(65500);
 		}
 		System.out.println("Choosed port " + choosed);

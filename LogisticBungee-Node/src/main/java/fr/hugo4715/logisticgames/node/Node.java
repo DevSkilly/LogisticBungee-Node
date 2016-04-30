@@ -56,7 +56,6 @@ public class Node {
 		}
 		jedis = new JedisPool(config.getJSONObject("redis").getString("host"), config.getJSONObject("redis").getInt("port"));
 		
-		register();
 		new Checker(config.getJSONObject("node").getInt("keepAliveTime")*900).start();
 		
 		new Thread(new Runnable(){
@@ -76,13 +75,6 @@ public class Node {
 		}));
 	}
 
-	private void register() {
-		try(Jedis j = getJedis()){
-			j.publish(config.getJSONObject("redis").getString("prefix") + ":bungee", id.toString() + "NREGISTER");
-			j.publish(config.getJSONObject("redis").getString("prefix") + ":bungee", id.toString() + "NLOAD0&&" + getConfig().getJSONObject("node").getInt("maxLoad"));
-		}
-	}
-
 	public UUID getId() {
 		return id;
 	}
@@ -100,6 +92,13 @@ public class Node {
 		return j;
 	}
 	
+	public void incrementLoad(int i){
+		load += i;
+	}
+	
+	public void decrementLoad(int i){
+		load -= i;
+	}
 	public int getLoad() {
 		return load;
 	}

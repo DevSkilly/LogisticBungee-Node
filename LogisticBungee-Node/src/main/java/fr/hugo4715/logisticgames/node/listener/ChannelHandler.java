@@ -1,5 +1,8 @@
 package fr.hugo4715.logisticgames.node.listener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import fr.hugo4715.logisticgames.node.server.ServerManager;
 import fr.hugo4715.logisticgames.node.server.ServerManager.ServerStartedCallBack;
 import fr.hugo4715.logisticgames.node.util.Callback;
@@ -13,10 +16,19 @@ public class ChannelHandler extends JedisPubSub {
 	@Override
 	public void onMessage(String channel, String message) {
 		System.out.println("Received " + message + " on channel " + channel);
-		if(message.startsWith("START")){
-			message = message.substring(5);
+		
+		JSONObject msg;
+		try{
+			msg = new JSONObject(message);
+		}catch(JSONException e){
+			e.printStackTrace();
+			return;
+		}
+		
+		if(msg.getString("cmd").equals("START")){
 			
-			String gm = message;
+			String gm = msg.getString("gamemode");
+			
 			System.out.println("Creating server with type " + gm);
 			ServerManager.getInstance().startServer(gm, new Callback<ServerStartedCallBack>(){
 
