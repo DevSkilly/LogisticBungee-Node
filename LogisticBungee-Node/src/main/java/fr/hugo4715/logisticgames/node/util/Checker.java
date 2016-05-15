@@ -1,9 +1,10 @@
 package fr.hugo4715.logisticgames.node.util;
 
+import java.nio.charset.StandardCharsets;
+
 import org.json.JSONObject;
 
 import fr.hugo4715.logisticgames.node.Node;
-import redis.clients.jedis.Jedis;
 
 public class Checker extends Thread implements Runnable {
 
@@ -21,9 +22,7 @@ public class Checker extends Thread implements Runnable {
 			msg.put("load", Node.getInstance().getLoad());
 			msg.put("maxLoad", Node.getInstance().getConfig().getJSONObject("node").getInt("maxLoad"));
 			
-			try(Jedis j = Node.getInstance().getJedis()){
-				j.publish(Node.getInstance().getConfig().getJSONObject("redis").getString("prefix") + ":bungee", msg.toString());
-			}
+			Node.getInstance().getPubSub().publish((Node.getInstance().getConfig().getJSONObject("redis").getString("prefix") + ":bungee").getBytes(StandardCharsets.UTF_8), msg.toString().getBytes(StandardCharsets.UTF_8));
 			try {
 				sleep(wait);
 			} catch (InterruptedException ignored) {}

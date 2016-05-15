@@ -6,16 +6,17 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import fr.hugo4715.crackedbroker.client.CrackedBrokerClient;
+import fr.hugo4715.crackedbroker.commons.PubSub;
 import fr.hugo4715.logisticgames.node.listener.ChannelHandler;
 import fr.hugo4715.logisticgames.node.server.ServerManager;
 import fr.hugo4715.logisticgames.node.util.Checker;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 import sun.misc.IOUtils;
 
 public class Node {
@@ -32,7 +33,7 @@ public class Node {
 
 	protected JSONObject config;
 
-	protected JedisPool jedis;
+	protected CrackedBrokerClient broker;
 	
 	protected UUID id;
 	
@@ -54,7 +55,11 @@ public class Node {
 				id = UUID.fromString(config.getJSONObject("node").getString("uuid"));
 			}catch(IllegalArgumentException ignored){}
 		}
-		jedis = new JedisPool(config.getJSONObject("redis").getString("host"), config.getJSONObject("redis").getInt("port"));
+		try {
+			broker = new CrackedBrokerClient(config.getJSONObject("broker").getString("host"), config.getJSONObject("broker").getInt("port"),config.getJSONObject("broker").getString("password"));
+		} catch (JSONException | IOException e) {
+			e.printStackTrace();
+		}
 		
 		new Checker(config.getJSONObject("node").getInt("keepAliveTime")*900).start();
 		
@@ -62,7 +67,7 @@ public class Node {
 
 			@Override
 			public void run() {
-				getJedis().subscribe(new ChannelHandler(), getConfig().getJSONObject("redis").getString("prefix") + ":node:" + id.toString());
+				getPubSub().subscribe((getConfig().getJSONObject("redis").getString("prefix") + ":node:" + id.toString()).getBytes(StandardCharsets.UTF_8),new ChannelHandler());
 			}
 			
 		}).start();
@@ -83,13 +88,8 @@ public class Node {
 		return config;
 	}
 
-	public Jedis getJedis() {
-		Jedis j = jedis.getResource();
-	
-		if(config.getJSONObject("redis").getString("password") != null && !config.getJSONObject("redis").getString("password").isEmpty()){
-			j.auth(config.getJSONObject("redis").getString("password"));
-		}
-		return j;
+	public PubSub getPubSub() {
+		return broker;
 	}
 	
 	public void incrementLoad(int i){

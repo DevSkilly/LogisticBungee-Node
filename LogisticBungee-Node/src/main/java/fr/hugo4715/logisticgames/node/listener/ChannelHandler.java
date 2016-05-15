@@ -1,34 +1,33 @@
 package fr.hugo4715.logisticgames.node.listener;
 
+import java.nio.charset.StandardCharsets;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import fr.hugo4715.crackedbroker.commons.MessageReceivedEvent;
+import fr.hugo4715.crackedbroker.commons.PubSubListener;
 import fr.hugo4715.logisticgames.node.server.ServerManager;
 import fr.hugo4715.logisticgames.node.server.ServerManager.ServerStartedCallBack;
 import fr.hugo4715.logisticgames.node.util.Callback;
-import redis.clients.jedis.JedisPubSub;
 
-public class ChannelHandler extends JedisPubSub {
-	public ChannelHandler() {
-		// TODO Auto-generated constructor stub
-	}
-	
+public class ChannelHandler implements PubSubListener{
 	@Override
-	public void onMessage(String channel, String message) {
-		System.out.println("Received " + message + " on channel " + channel);
-		
+	public void onMessage(MessageReceivedEvent e) {
+		System.out.println("Received " + new String(e.getMessage(), StandardCharsets.UTF_8) + " on channel " + new String(e.getChannel(), StandardCharsets.UTF_8));
+
 		JSONObject msg;
 		try{
-			msg = new JSONObject(message);
-		}catch(JSONException e){
-			e.printStackTrace();
+			msg = new JSONObject(new String(e.getMessage(), StandardCharsets.UTF_8));
+		}catch(JSONException ex){
+			ex.printStackTrace();
 			return;
 		}
-		
+
 		if(msg.getString("cmd").equals("START")){
-			
+
 			String gm = msg.getString("gamemode");
-			
+
 			System.out.println("Creating server with type " + gm);
 			ServerManager.getInstance().startServer(gm, new Callback<ServerStartedCallBack>(){
 
@@ -41,8 +40,8 @@ public class ChannelHandler extends JedisPubSub {
 						System.out.println("Started server on port " + result.getPort());
 					}
 				}
-				
+
 			});
-		}
+		}		
 	}
 }
