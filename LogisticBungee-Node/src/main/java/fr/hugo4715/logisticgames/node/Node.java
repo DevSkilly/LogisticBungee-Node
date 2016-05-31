@@ -1,16 +1,21 @@
 package fr.hugo4715.logisticgames.node;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import fr.hugo4715.eventmanager2.event.Event;
 import fr.hugo4715.logisticgames.node.listener.ChannelHandler;
 import fr.hugo4715.logisticgames.node.server.ServerManager;
 import fr.hugo4715.logisticgames.node.util.Checker;
@@ -39,7 +44,15 @@ public class Node {
 	protected int load = 0;
 	
 	private Node() {
+		
+		/*
+		 * Generate id
+		 */
 		id = UUID.randomUUID();
+		
+		/*
+		 * Setup the config
+		 */
 		try {
 			setupConfig();
 		} catch (JSONException | IOException e) {
@@ -48,16 +61,37 @@ public class Node {
 			return;
 		}
 		
+		
+		
+		/*
+		 * Load id if it exist
+		 */
 		//in case it collide
 		if(config.getJSONObject("node").getString("uuid") != null && !config.getJSONObject("node").getString("uuid").isEmpty()){
 			try{
 				id = UUID.fromString(config.getJSONObject("node").getString("uuid"));
 			}catch(IllegalArgumentException ignored){}
 		}
+		
+		/*
+		 * EventManager
+		 */
+		
+		
+		/*
+		 * Create Jedis Pool
+		 */
 		jedis = new JedisPool(config.getJSONObject("redis").getString("host"), config.getJSONObject("redis").getInt("port"));
 		
+		
+		/*
+		 * Create Checker thread
+		 */
 		new Checker(config.getJSONObject("node").getInt("keepAliveTime")*900).start();
 		
+		/*
+		 * Create Channel handler
+		 */
 		new Thread(new Runnable(){
 
 			@Override
@@ -67,6 +101,10 @@ public class Node {
 			
 		}).start();
 		
+		
+		/*
+		 * Shutdown hook
+		 */
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
 			@Override
 			public void run() {
@@ -116,6 +154,18 @@ public class Node {
 			}
 			config = new JSONObject(new String(IOUtils.readFully(new FileInputStream(configFile), Integer.MAX_VALUE, false)));
 			System.out.println("Created and loaded config");
+		}
+	}
+	
+	public void broadcastEvent(Event e) throws IOException{
+		try(Jedis j = getJedis()){
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
+			ObjectOutputStream s = new ObjectOutputStream(new BufferedOutputStream(output));
+			s.writeObject(e);
+			s.flush();
+			s.close();
+			
+			j.publish((getConfig().getJSONObject("redis").getString("prefix") + ":event").getBytes(StandardCharsets.UTF_8), output.toByteArray());
 		}
 	}
 

@@ -29,5 +29,4 @@ public class Checker extends Thread implements Runnable {
 			} catch (InterruptedException ignored) {}
 		}
 	}
-
 }
